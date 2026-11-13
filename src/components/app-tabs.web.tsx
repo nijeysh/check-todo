@@ -1,115 +1,133 @@
-import {
-  Tabs,
-  TabList,
-  TabTrigger,
-  TabSlot,
-  TabTriggerSlotProps,
-  TabListProps,
-} from 'expo-router/ui';
-import { SymbolView } from 'expo-symbols';
-import { Pressable, useColorScheme, View, StyleSheet } from 'react-native';
+import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
+import type { ComponentProps, ReactNode } from 'react';
+import { Pressable, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Icon, type IconName } from '@/components/icon';
+import { T } from '@/components/ui';
+import { Radius, Spacing } from '@/constants/theme';
+import { useLayoutSize, useTheme } from '@/hooks/use-theme';
 
-import { ExternalLink } from './external-link';
-import { ThemedText } from './themed-text';
-import { ThemedView } from './themed-view';
+const TABS: {
+  name: string;
+  href: '/' | '/calendar' | '/grid' | '/stats' | '/settings';
+  label: string;
+  icon: IconName;
+}[] = [
+  { name: 'index', href: '/', label: '오늘', icon: 'today' },
+  { name: 'calendar', href: '/calendar', label: '캘린더', icon: 'calendar' },
+  { name: 'grid', href: '/grid', label: '체크표', icon: 'grid' },
+  { name: 'stats', href: '/stats', label: '통계', icon: 'stats' },
+  { name: 'settings', href: '/settings', label: '설정', icon: 'settings' },
+];
 
+/**
+ * 웹: 반응형 탭.
+ * - 데스크톱(1024px~): 왼쪽 사이드바
+ * - 폰·태블릿: 하단 탭바
+ */
 export default function AppTabs() {
+  const c = useTheme();
+  const wide = useLayoutSize() === 'desktop';
   return (
-    <Tabs>
-      <TabSlot style={{ height: '100%' }} />
+    <Tabs style={{ flex: 1, flexDirection: wide ? 'row' : 'column-reverse', backgroundColor: c.background }}>
       <TabList asChild>
-        <CustomTabList>
-          <TabTrigger name="home" href="/" asChild>
-            <TabButton>Home</TabButton>
-          </TabTrigger>
-          <TabTrigger name="explore" href="/explore" asChild>
-            <TabButton>Explore</TabButton>
-          </TabTrigger>
-        </CustomTabList>
+        <NavBar wide={wide}>
+          {TABS.map((t) => (
+            <TabTrigger key={t.name} name={t.name} href={t.href} asChild>
+              <TabButton wide={wide} icon={t.icon}>
+                {t.label}
+              </TabButton>
+            </TabTrigger>
+          ))}
+        </NavBar>
       </TabList>
+      <TabSlot style={{ flex: 1 }} />
     </Tabs>
   );
 }
 
-export function TabButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
+function NavBar({ wide, children, ...props }: ComponentProps<typeof View> & { wide: boolean }) {
+  const c = useTheme();
+  const insets = useSafeAreaInsets();
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView
-        type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
-        style={styles.tabButtonView}>
-        <ThemedText type="small" themeColor={isFocused ? 'text' : 'textSecondary'}>
-          {children}
-        </ThemedText>
-      </ThemedView>
-    </Pressable>
-  );
-}
-
-export function CustomTabList(props: TabListProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-
-  return (
-    <View {...props} style={styles.tabListContainer}>
-      <ThemedView type="backgroundElement" style={styles.innerContainer}>
-        <ThemedText type="smallBold" style={styles.brandText}>
-          Expo Starter
-        </ThemedText>
-
-        {props.children}
-
-        <ExternalLink href="https://docs.expo.dev" asChild>
-          <Pressable style={styles.externalPressable}>
-            <ThemedText type="link">Docs</ThemedText>
-            <SymbolView
-              tintColor={colors.text}
-              name={{ ios: 'arrow.up.right.square', web: 'link' }}
-              size={12}
-            />
-          </Pressable>
-        </ExternalLink>
-      </ThemedView>
+    <View
+      {...props}
+      style={[
+        wide
+          ? { width: 240, paddingVertical: Spacing.five, paddingHorizontal: Spacing.three, gap: 4 }
+          : {
+              flexDirection: 'row',
+              paddingTop: 6,
+              paddingBottom: insets.bottom + 6,
+              borderTopWidth: 1,
+              borderTopColor: c.border,
+            },
+        { backgroundColor: c.surface },
+      ]}>
+      {wide ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, marginBottom: 20 }}>
+          <View
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              backgroundColor: c.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+            <T variant="label" color={c.onAccent} style={{ fontWeight: '900' }}>
+              ✓
+            </T>
+          </View>
+          <T variant="heading" style={{ fontWeight: '800' }}>
+            CHECKTODO
+          </T>
+        </View>
+      ) : null}
+      {children}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  tabListContainer: {
-    position: 'absolute',
-    width: '100%',
-    padding: Spacing.three,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  innerContainer: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.five,
-    borderRadius: Spacing.five,
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexGrow: 1,
-    gap: Spacing.two,
-    maxWidth: MaxContentWidth,
-  },
-  brandText: {
-    marginRight: 'auto',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  tabButtonView: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.three,
-  },
-  externalPressable: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.one,
-    marginLeft: Spacing.three,
-  },
-});
+function TabButton({
+  wide,
+  icon,
+  children,
+  isFocused,
+  ...props
+}: Omit<TabTriggerSlotProps, 'children'> &
+  Omit<ComponentProps<typeof Pressable>, 'children' | 'style'> & {
+    wide: boolean;
+    icon: IconName;
+    children: ReactNode;
+  }) {
+  const c = useTheme();
+  const color = isFocused ? c.text : c.textFaint;
+  return (
+    <Pressable
+      {...props}
+      style={({ pressed }) => [
+        wide
+          ? {
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 12,
+              paddingHorizontal: 12,
+              borderRadius: Radius.md,
+              backgroundColor: isFocused || pressed ? c.surfaceAlt : 'transparent',
+            }
+          : { flex: 1, alignItems: 'center', paddingVertical: 4, gap: 2 },
+        { transform: [{ scale: pressed ? 0.95 : 1 }] },
+      ]}>
+      <Icon name={icon} size={wide ? 22 : 24} color={wide && isFocused ? c.accentInk : color} />
+      <T
+        variant={wide ? 'label' : 'caption'}
+        color={wide ? (isFocused ? c.text : c.textMuted) : color}
+        style={{ fontWeight: isFocused ? '700' : '500' }}>
+        {children}
+      </T>
+    </Pressable>
+  );
+}

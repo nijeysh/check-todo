@@ -1,56 +1,57 @@
-# Welcome to your Expo app 👋
+# CHECKTODO
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+매일 하는 체크리스트를 네모 칸에 체크하고 연속일 · 끊긴 날 · 며칠 만에 다시 했는지 보여주는 습관 트래커.
+Expo(React Native) 한 프로젝트로 **웹 · iOS · Android**를 함께 만든다. 설계는 [DESIGN.md](DESIGN.md).
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 실행
 
 ```bash
-npm run reset-project
+npm install
+npm run web       # 웹 (http://localhost:8081)
+npm run ios       # iOS 시뮬레이터 (macOS 필요) 또는 Expo Go 앱으로 QR 스캔
+npm run android
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+## 공휴일 (선택)
 
-### Other setup steps
+날짜·요일은 기기에서 계산하고, **공휴일만** 공공데이터포털 API에서 가져와요. 키가 없어도 앱은 동작하고 주말 색만 표시돼요.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+1. [공공데이터포털 – 한국천문연구원 특일 정보](https://www.data.go.kr/data/15012690/openapi.do)에서 활용신청
+2. 마이페이지에서 **일반 인증키 (Decoding)** 복사
+3. `.env.example`을 `.env.local`로 복사하고 `EXPO_PUBLIC_HOLIDAY_API_KEY=` 뒤에 붙여넣기
+4. 개발 서버 다시 시작
 
-## Learn more
+한 번 받은 연도는 기기에 30일 동안 저장해 두고 다시 요청하지 않아요.
 
-To learn more about developing your project with Expo, look at the following resources:
+## 구조
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/
+├─ app/                  화면 (Expo Router: 파일 = 화면)
+│  ├─ (tabs)/            하단 탭 / 데스크톱 사이드바
+│  │  ├─ index.tsx       오늘
+│  │  ├─ calendar.tsx    캘린더 (일 · 주 · 월 · 년)
+│  │  ├─ grid.tsx        체크표 (항목 × 날짜)
+│  │  ├─ stats.tsx       통계
+│  │  └─ settings.tsx    설정
+│  └─ habit/
+│     ├─ [id].tsx        항목 상세 (달력, 연속 기록 흐름)
+│     └─ edit.tsx        항목 추가/편집
+├─ components/
+│  ├─ app-tabs.tsx       iOS/Android 네이티브 탭바
+│  ├─ app-tabs.web.tsx   웹 반응형 탭 (폰: 하단, 1024px~: 사이드바)
+│  └─ ...
+└─ lib/
+   ├─ date.ts            'YYYY-MM-DD' 날짜 계산
+   ├─ stats.ts           연속일 · 끊긴 날 · 며칠 만에 다시 (순수 함수)
+   ├─ calendar.ts        날짜별 요약, 주·월 그리드 날짜
+   ├─ holidays.ts        공휴일 (공공데이터포털 API + 기기 저장)
+   └─ store.ts           로컬 저장 (웹: localStorage, 앱: 기기 저장소)
+```
 
-## Join the community
+## 검사
 
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx tsc --noEmit
+npx expo lint
+```
