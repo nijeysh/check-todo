@@ -6,7 +6,7 @@ import { CheckGrid } from '@/components/check-grid';
 import { MonthNav } from '@/components/month-nav';
 import { Button, PageTitle, ProgressBar, Screen, Section, T } from '@/components/ui';
 import { useLayoutSize, useTheme } from '@/hooks/use-theme';
-import { addDays, addMonths, monthStart, parts, rangeKeys } from '@/lib/date';
+import { addDays, addMonths, monthStart, parts, rangeKeys, type DateKey } from '@/lib/date';
 import { useActiveHabits, useAppData, useToday } from '@/lib/store';
 
 export default function GridScreen() {
@@ -15,7 +15,10 @@ export default function GridScreen() {
   const habits = useActiveHabits();
   const { checks } = useAppData();
   const size = useLayoutSize();
-  const [month, setMonth] = useState(() => monthStart(today));
+  // null = "이번 달을 따라감". 달이 바뀌면 자동으로 새 달로 넘어간다
+  const [pickedMonth, setPickedMonth] = useState<DateKey | null>(null);
+  const month = pickedMonth ?? monthStart(today);
+  const setMonth = (m: DateKey) => setPickedMonth(m === monthStart(today) ? null : m);
 
   const isCurrent = month === monthStart(today);
   const end = isCurrent ? today : addDays(addMonths(month, 1), -1);

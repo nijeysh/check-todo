@@ -21,7 +21,10 @@ export default function HabitDetailScreen() {
   const today = useToday();
   const toast = useToast();
   const size = useLayoutSize();
-  const [month, setMonth] = useState(() => monthStart(today));
+  // null = "이번 달을 따라감". 달이 바뀌면 자동으로 새 달로 넘어간다
+  const [pickedMonth, setPickedMonth] = useState<DateKey | null>(null);
+  const month = pickedMonth ?? monthStart(today);
+  const setMonth = (m: DateKey) => setPickedMonth(m === monthStart(today) ? null : m);
 
   if (!habit || !stats) {
     return (

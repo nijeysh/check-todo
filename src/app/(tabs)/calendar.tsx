@@ -36,7 +36,14 @@ export default function CalendarScreen() {
   const size = useLayoutSize();
   const { settings } = useAppData();
   const [view, setView] = useState<CalView>('month');
-  const [cursor, setCursor] = useState<DateKey>(today);
+  // null = "오늘을 따라감". 켜 둔 채 날짜가 바뀌면 자동으로 새 오늘로 넘어간다
+  const [picked, setPicked] = useState<DateKey | null>(null);
+  const cursor = picked ?? today;
+  const setCursor = (next: DateKey | ((cur: DateKey) => DateKey)) =>
+    setPicked((p) => {
+      const n = typeof next === 'function' ? next(p ?? today) : next;
+      return n === today ? null : n;
+    });
 
   const { y, m, d } = parts(cursor);
   const ws = weekStart(cursor, settings.weekStartsOn);

@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMemo, useSyncExternalStore } from 'react';
+import { AppState, Platform } from 'react-native';
 
 import { BRAND } from '@/constants/theme';
 
-import { addDays, todayKey, type DateKey } from './date';
+import { addDays, msUntilNextDay, todayKey, type DateKey } from './date';
 import { computeStats, feedbackFor, type CheckFeedback } from './stats';
 import type { AppData, Habit, Settings } from './types';
 
@@ -86,18 +87,46 @@ export function useHydrated() {
   );
 }
 
-/** 하루 시작 시각을 반영한 오늘. 앱을 켜 둔 채 날짜가 바뀌어도 1분 안에 갱신된다 */
+/**
+ * "오늘" (사용자 기기의 시계·시간대 + 하루 시작 시각 기준).
+ * 날짜가 바뀌는 순간을 놓치지 않도록 세 가지로 확인한다.
+ * 1. 다음 하루가 시작되는 시각에 맞춘 타이머
+ * 2. 앱/브라우저 탭이 다시 화면에 나올 때 (백그라운드에서는 타이머가 멈추므로)
+ * 3. 1분마다 (타이머가 밀리거나 기기 시계를 바꾼 경우 대비)
+ */
 let today = todayKey(0);
 const todayListeners = new Set<() => void>();
-function refreshToday() {
+let dayTimer: ReturnType<typeof setTimeout> | undefined;
+
+function scheduleDayTimer() {
+  clearTimeout(dayTimer);
+  // 경계 직후에 확인하도록 0.5초 여유
+  dayTimer = setTimeout(refreshToday, msUntilNextDay(state.settings.dayStartHour) + 500);
+}
+
+export function refreshToday() {
   const next = todayKey(state.settings.dayStartHour);
   if (next !== today) {
     today = next;
     todayListeners.forEach((l) => l());
   }
+  scheduleDayTimer();
 }
+
+// 설정(하루 시작 시각)이 바뀌어도 다시 계산
 listeners.add(refreshToday);
 setInterval(refreshToday, 60_000);
+scheduleDayTimer();
+
+AppState.addEventListener('change', (s) => {
+  if (s === 'active') refreshToday();
+});
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.addEventListener('focus', refreshToday);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshToday();
+  });
+}
 
 export function useToday(): DateKey {
   return useSyncExternalStore(

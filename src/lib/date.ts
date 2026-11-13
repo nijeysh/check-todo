@@ -19,6 +19,17 @@ export function todayKey(dayStartHour = 0, now: Date = new Date()): DateKey {
   return toKey(new Date(now.getTime() - dayStartHour * 3_600_000));
 }
 
+/**
+ * 다음 "하루"가 시작될 때까지 남은 시간(ms). 사용자 기기의 시계·시간대 기준.
+ * dayStartHour가 4면 다음 날 새벽 4시까지, 0이면 다음 자정까지.
+ */
+export function msUntilNextDay(dayStartHour = 0, now: Date = new Date()): number {
+  const shift = dayStartHour * 3_600_000;
+  const shifted = new Date(now.getTime() - shift);
+  const nextStart = new Date(shifted.getFullYear(), shifted.getMonth(), shifted.getDate() + 1);
+  return nextStart.getTime() - shifted.getTime();
+}
+
 export function keyToDayNum(key: DateKey): number {
   const [y, m, d] = key.split('-').map(Number);
   return Math.round(Date.UTC(y, m - 1, d) / DAY_MS);
