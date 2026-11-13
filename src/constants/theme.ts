@@ -118,6 +118,14 @@ export function buildPalette(scheme: 'light' | 'dark', main = BRAND.main, sub = 
 
 export type Palette = ReturnType<typeof buildPalette>;
 
+/**
+ * 동그라미 안 숫자 세로 보정.
+ * 웹 글꼴(Pretendard)은 위쪽 여백이 아래보다 커서, 줄 상자를 가운데 두어도 숫자 모양이 0.125em 아래에 그려진다.
+ * (앱은 시스템 글꼴이라 보정하지 않음)
+ */
+export const glyphNudge = (fontSize: number) =>
+  Platform.OS === 'web' ? { transform: [{ translateY: -fontSize * 0.125 }] } : null;
+
 export const Fonts = Platform.select({
   web: { sans: 'var(--font-display)', mono: 'var(--font-mono)' },
   default: { sans: undefined, mono: 'monospace' },

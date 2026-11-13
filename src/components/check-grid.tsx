@@ -5,7 +5,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { CheckBox } from '@/components/check-box';
 import { useToast } from '@/components/toast';
 import { T } from '@/components/ui';
-import { Spacing } from '@/constants/theme';
+import { Spacing, glyphNudge } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { parts, weekday, weekdayLabel, type DateKey } from '@/lib/date';
 import { isDue } from '@/lib/stats';
@@ -88,7 +88,7 @@ export function CheckGrid({ habits, days, boxSize = 26, nameWidth = 120 }: Props
                     }}>
                     <T
                       variant="caption"
-                      style={{ fontWeight: isToday ? '700' : '500' }}
+                      style={[{ fontWeight: isToday ? '700' : '500' }, glyphNudge(12)]}
                       color={isToday ? c.onAccent : 'secondary'}>
                       {d}
                     </T>

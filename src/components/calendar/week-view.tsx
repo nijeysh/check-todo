@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { dayNumberColor } from '@/components/calendar/shared';
 import { Icon } from '@/components/icon';
 import { Section, T, Tap } from '@/components/ui';
-import { Radius } from '@/constants/theme';
+import { Radius, glyphNudge } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useDaySummaries, weekStart } from '@/lib/calendar';
 import { addDays, parts, weekdayLabel, type DateKey } from '@/lib/date';
@@ -59,7 +59,10 @@ export function WeekView({
                   justifyContent: 'center',
                   backgroundColor: isToday ? c.accent : 'transparent',
                 }}>
-                <T variant="heading" color={isToday ? c.onAccent : dayNumberColor(date, holidays, c)}>
+                <T
+                  variant="heading"
+                  color={isToday ? c.onAccent : dayNumberColor(date, holidays, c)}
+                  style={glyphNudge(19)}>
                   {parts(date).d}
                 </T>
               </View>

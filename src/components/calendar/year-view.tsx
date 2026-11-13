@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 
 import { dayNumberColor } from '@/components/calendar/shared';
 import { Section, T, Tap } from '@/components/ui';
-import { Fonts, textOn, type Palette } from '@/constants/theme';
+import { Fonts, glyphNudge, textOn, type Palette } from '@/constants/theme';
 import { useLayoutSize, useTheme } from '@/hooks/use-theme';
 import { monthGridDates, useDaySummaries } from '@/lib/calendar';
 import { addDays, parts, rangeKeys, WEEKDAY_LABELS, type DateKey } from '@/lib/date';
@@ -111,6 +111,7 @@ export function YearView({
                                 style={{
                                   fontFamily: Fonts.sans,
                                   fontSize,
+                                  ...glyphNudge(fontSize),
                                   fontWeight: isToday || h.strong ? '700' : '500',
                                   color: isToday
                                     ? textOn(c.sub)

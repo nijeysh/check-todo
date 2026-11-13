@@ -2,7 +2,7 @@ import { Pressable, View } from 'react-native';
 
 import { ratioColor, dayNumberColor } from '@/components/calendar/shared';
 import { T } from '@/components/ui';
-import { Radius } from '@/constants/theme';
+import { Radius, glyphNudge } from '@/constants/theme';
 import { useLayoutSize, useTheme } from '@/hooks/use-theme';
 import { monthGridDates, useDaySummaries } from '@/lib/calendar';
 import { parts, WEEKDAY_LABELS, type DateKey } from '@/lib/date';
@@ -86,7 +86,7 @@ export function MonthView({
                     <T
                       variant="small"
                       color={isToday ? c.onAccent : dayNumberColor(date, holidays, c)}
-                      style={{ fontWeight: isToday || selected ? '700' : '500' }}>
+                      style={[{ fontWeight: isToday || selected ? '700' : '500' }, glyphNudge(13)]}>
                       {parts(date).d}
                     </T>
                   </View>
