@@ -10,7 +10,9 @@ import type { DateKey } from './date';
  * - 키: EXPO_PUBLIC_HOLIDAY_API_KEY (.env.local, .env.example 참고). 없으면 공휴일 없이 동작한다.
  * - 한 번 받은 해는 기기에 30일 동안 저장해 두고 다시 요청하지 않는다.
  */
-const API_KEY = process.env.EXPO_PUBLIC_HOLIDAY_API_KEY ?? '';
+const RAW_KEY = (process.env.EXPO_PUBLIC_HOLIDAY_API_KEY ?? '').trim().replace(/^["']|["']$/g, '');
+// Encoding 키(%2B, %3D 등)를 넣어도 되도록 한 번 풀어 둔다 (요청할 때 URLSearchParams가 다시 인코딩)
+const API_KEY = RAW_KEY.includes('%') ? decodeURIComponent(RAW_KEY) : RAW_KEY;
 const ENDPOINT = 'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo';
 const CACHE_PREFIX = 'checktodo:holidays:';
 const CACHE_DAYS = 30;
@@ -44,8 +46,11 @@ async function fetchMonth(year: number, month: number): Promise<HolidayMap> {
     numOfRows: '50',
   });
   const res = await fetch(`${ENDPOINT}?${qs}`);
+  const json = await res.json().catch(() => null);
+  // 키 오류 등은 { OpenAPI_ServiceResponse: { cmmMsgHeader: { errMsg, returnAuthMsg } } } 로 온다
+  const apiErr = json?.OpenAPI_ServiceResponse?.cmmMsgHeader;
+  if (apiErr) throw new Error(`holiday api: ${apiErr.errMsg} (${apiErr.returnAuthMsg})`);
   if (!res.ok) throw new Error(`holiday api ${res.status}`);
-  const json = await res.json();
   const body = json?.response?.body;
   if (!body) throw new Error('holiday api: unexpected response');
   // 결과가 없으면 items가 빈 문자열, 하나면 객체, 여러 개면 배열로 온다

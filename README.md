@@ -19,7 +19,8 @@ npm run android
 1. [공공데이터포털 – 한국천문연구원 특일 정보](https://www.data.go.kr/data/15012690/openapi.do)에서 활용신청
 2. 마이페이지에서 **일반 인증키 (Decoding)** 복사
 3. `.env.example`을 `.env.local`로 복사하고 `EXPO_PUBLIC_HOLIDAY_API_KEY=` 뒤에 붙여넣기
-4. 개발 서버 다시 시작
+4. 키가 되는지 확인: `node scripts/fetch-holidays.mjs 2026` (그해 공휴일 목록이 나오면 성공)
+5. 개발 서버 다시 시작
 
 한 번 받은 연도는 기기에 30일 동안 저장해 두고 다시 요청하지 않아요.
 
