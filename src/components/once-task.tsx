@@ -4,12 +4,15 @@ import { Pressable, TextInput, View } from 'react-native';
 
 import { CheckBox } from '@/components/check-box';
 import { ColorPicker } from '@/components/color-picker';
+import { TimeWheelSheet } from '@/components/time-wheel';
 import { Icon } from '@/components/icon';
 import { useToast } from '@/components/toast';
 import { ListRow, T } from '@/components/ui';
 import { Fonts, Radius, textOn } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { DateKey } from '@/lib/date';
+import { requestPermission } from '@/lib/notifications';
+import { formatTime } from '@/lib/reminders';
 import { actions, useAppData } from '@/lib/store';
 import type { Habit } from '@/lib/types';
 
@@ -41,6 +44,7 @@ export function OnceTaskRow({ task, date }: { task: Habit; date: DateKey }) {
           {task.title}
         </T>
       }
+      subtitle={task.reminder && !done ? `🔔 ${formatTime(task.reminder)}` : undefined}
       accessory={
         <Pressable
           hitSlop={10}
@@ -63,33 +67,39 @@ export function OnceTaskRow({ task, date }: { task: Habit; date: DateKey }) {
 
 /**
  * 이름만 쓰고 엔터 → 그날의 할 일로 바로 추가.
- * 왼쪽 네모를 누르면 체크 칸 색을 고를 수 있다 (고른 색은 이어서 추가할 때도 유지).
+ * 왼쪽 네모: 체크 칸 색 고르기 / 🔔: 알림 시각 고르기.
+ * 고른 색은 이어서 추가할 때도 유지하고, 알림 시각은 한 번 추가하면 비운다.
  */
 export function OnceQuickAdd({ date, placeholder = '할 일 추가' }: { date: DateKey; placeholder?: string }) {
   const c = useTheme();
   const [text, setText] = useState('');
   const [focused, setFocused] = useState(false);
   const [color, setColor] = useState<string>(c.main);
-  const [picking, setPicking] = useState(false);
-  const active = focused || picking || !!text;
+  const [reminder, setReminder] = useState<string | undefined>();
+  const [colorOpen, setColorOpen] = useState(false);
+  const [wheelOpen, setWheelOpen] = useState(false);
+  const active = focused || colorOpen || !!text || !!reminder;
   const add = () => {
     const title = text.trim();
     if (!title) return;
-    actions.addOnce(title, date, color);
+    const id = actions.addOnce(title, date, color);
+    if (reminder) actions.updateHabit(id, { reminder });
     setText('');
-    setPicking(false);
+    setReminder(undefined);
+    setColorOpen(false);
   };
   return (
     <View style={{ paddingHorizontal: 20, paddingVertical: 10, gap: 12 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="체크 칸 색 고르기"
-          onPress={() => setPicking((v) => !v)}
+          onPress={() => setColorOpen((v) => !v)}
           style={({ pressed }) => ({
             width: 30,
             height: 30,
             borderRadius: 9,
+            marginRight: 4,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: active ? color : c.accentSoft,
@@ -110,6 +120,7 @@ export function OnceQuickAdd({ date, placeholder = '할 일 추가' }: { date: D
           maxLength={60}
           style={{
             flex: 1,
+            minWidth: 0,
             fontSize: 17,
             fontWeight: '600',
             letterSpacing: -0.3,
@@ -118,6 +129,33 @@ export function OnceQuickAdd({ date, placeholder = '할 일 추가' }: { date: D
             fontFamily: Fonts.sans,
           }}
         />
+        {/* 알림 버튼은 항상 보이게 (찾기 쉽게) */}
+        {
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={reminder ? `알림 ${formatTime(reminder)}, 바꾸기` : '알림 시각 고르기'}
+            onPress={() => setWheelOpen(true)}
+            hitSlop={6}
+            style={({ pressed }) => ({
+              height: 34,
+              minWidth: 34,
+              paddingHorizontal: reminder ? 10 : 0,
+              borderRadius: Radius.sm + 2,
+              flexDirection: 'row',
+              gap: 4,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: reminder ? c.accentSoft : c.surfaceAlt,
+              transform: [{ scale: pressed ? 0.92 : 1 }],
+            })}>
+            <Icon name="bell" size={18} color={reminder ? c.accentInk : c.textMuted} />
+            {reminder ? (
+              <T variant="small" color="accent" style={{ fontWeight: '700' }}>
+                {formatTime(reminder)}
+              </T>
+            ) : null}
+          </Pressable>
+        }
         {text.trim() ? (
           <Pressable
             onPress={add}
@@ -136,7 +174,17 @@ export function OnceQuickAdd({ date, placeholder = '할 일 추가' }: { date: D
           </Pressable>
         ) : null}
       </View>
-      {picking ? (
+      <TimeWheelSheet
+        visible={wheelOpen}
+        value={reminder}
+        onDone={(t) => {
+          setReminder(t);
+          requestPermission();
+        }}
+        onClose={() => setWheelOpen(false)}
+        onClear={reminder ? () => setReminder(undefined) : undefined}
+      />
+      {colorOpen ? (
         <View style={{ paddingLeft: 44, gap: 8 }}>
           <T variant="caption" color="muted">
             체크 칸 색
@@ -145,7 +193,7 @@ export function OnceQuickAdd({ date, placeholder = '할 일 추가' }: { date: D
         </View>
       ) : active ? (
         <T variant="caption" color="faint" style={{ paddingLeft: 44 }}>
-          왼쪽 네모를 누르면 색을 바꿀 수 있어요
+          왼쪽 네모는 색, 🔔는 알림 시각이에요
         </T>
       ) : null}
     </View>

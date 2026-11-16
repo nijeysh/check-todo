@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { ToastProvider } from '@/components/toast';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
+import { startReminderSync } from '@/lib/notifications';
 import { hydrate, useHydrated } from '@/lib/store';
 
 SplashScreen.preventAutoHideAsync();
@@ -16,7 +17,11 @@ export default function RootLayout() {
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
 
   useEffect(() => {
-    hydrate().finally(() => SplashScreen.hideAsync());
+    hydrate().finally(() => {
+      SplashScreen.hideAsync();
+      // 저장된 데이터를 읽은 뒤 알림 예약을 맞춘다 (권한이 있을 때만)
+      startReminderSync();
+    });
   }, []);
 
   if (!hydrated) return null;

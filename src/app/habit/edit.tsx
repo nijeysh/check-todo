@@ -3,11 +3,13 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 
 import { ColorPicker } from '@/components/color-picker';
+import { ReminderPicker } from '@/components/reminder-picker';
 import { Button, Screen, T, boxInputStyle, inputStyle } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { addDays, formatLong, isValidKey, WEEKDAY_LABELS } from '@/lib/date';
 import { confirm } from '@/lib/platform';
+import { formatTime } from '@/lib/reminders';
 import { actions, nextHabitColor, useAppData, useToday } from '@/lib/store';
 import type { HabitKind, Schedule } from '@/lib/types';
 
@@ -40,6 +42,7 @@ export default function HabitEditScreen() {
     existing?.schedule.type === 'weekdays' ? existing.schedule.days : ALL_DAYS,
   );
   const [startDate, setStartDate] = useState(existing?.startDate ?? today);
+  const [reminder, setReminder] = useState<string | undefined>(existing?.reminder);
 
   // 지속 항목의 시작일은 오늘 이전, 단발성 할 일의 날짜는 미래도 가능
   const startValid = isValidKey(startDate) && (once || startDate <= today);
@@ -55,6 +58,7 @@ export default function HabitEditScreen() {
       color,
       schedule: once ? ({ type: 'daily' } as const) : schedule,
       startDate,
+      reminder,
     };
     if (existing) actions.updateHabit(existing.id, input);
     else actions.addHabit(input);
@@ -197,6 +201,18 @@ export default function HabitEditScreen() {
           </Field>
         </>
       )}
+
+      <Field
+        label="알림"
+        hint={
+          reminder
+            ? once
+              ? `이날 ${formatTime(reminder)}에 알려드려요`
+              : `하는 날 ${formatTime(reminder)}에, 아직 체크 안 했으면 알려드려요`
+            : undefined
+        }>
+        <ReminderPicker value={reminder} onChange={setReminder} />
+      </Field>
 
       <Field label="체크 칸 색">
         <ColorPicker value={color} onChange={setColor} />

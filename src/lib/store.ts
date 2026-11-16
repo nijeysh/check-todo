@@ -66,6 +66,17 @@ export async function hydrate() {
   emit();
 }
 
+/** 컴포넌트 밖(알림 예약 등)에서 데이터 읽기·구독 */
+export const getData = () => state;
+export const getToday = () => today;
+export function subscribeData(l: () => void) {
+  return subscribe(l);
+}
+export function subscribeToday(l: () => void) {
+  todayListeners.add(l);
+  return () => todayListeners.delete(l);
+}
+
 function subscribe(l: () => void) {
   listeners.add(l);
   return () => listeners.delete(l);
@@ -165,7 +176,8 @@ export function useHabitStats(habit: Habit | undefined) {
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const nowIso = () => new Date().toISOString();
 
-export type HabitInput = Pick<Habit, 'title' | 'emoji' | 'color' | 'schedule' | 'startDate'> & Pick<Habit, 'kind'>;
+export type HabitInput = Pick<Habit, 'title' | 'emoji' | 'color' | 'schedule' | 'startDate'> &
+  Pick<Habit, 'kind' | 'reminder'>;
 
 /** 단발성 할 일 기본 색 = 브랜드 main 색 */
 export const ONCE_COLOR = BRAND.main;

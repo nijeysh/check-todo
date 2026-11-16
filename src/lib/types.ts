@@ -16,8 +16,10 @@ export interface Habit {
   emoji?: string;
   color: string;
   schedule: Schedule;
-  /** 통계 계산 시작일 */
+  /** 통계 계산 시작일 (단발성 할 일은 그 날짜) */
   startDate: DateKey;
+  /** 알림 시각 'HH:MM' (없으면 알림 없음). 지속 항목은 하는 날마다, 단발성은 그 날짜에 */
+  reminder?: string;
   order: number;
   archivedAt?: string;
   createdAt: string;
@@ -35,6 +37,8 @@ export interface Settings {
   /** 사용자가 고른 테마 색 (없으면 기본 브랜드 색) */
   themeMain?: string;
   themeSub?: string;
+  /** 하루 마무리 알림 시각 'HH:MM' (없으면 끔): "아직 N개 남았어요" */
+  summaryTime?: string;
 }
 
 export interface AppData {

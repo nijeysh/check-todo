@@ -2,13 +2,16 @@ import { router } from 'expo-router';
 import { Platform, Pressable, View } from 'react-native';
 
 import { Icon } from '@/components/icon';
+import { ReminderPicker } from '@/components/reminder-picker';
 import { IconButton } from '@/components/month-nav';
 import { useToast } from '@/components/toast';
 import { Button, ListRow, PageTitle, Screen, Section, T } from '@/components/ui';
 import { findSwatch } from '@/constants/brand-colors';
 import { BRAND, Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { notificationsNote, openNotificationSettings, sendTestNotification } from '@/lib/notifications';
 import { confirm, exportText, pickTextFile } from '@/lib/platform';
+import { formatTime } from '@/lib/reminders';
 import { actions, useAppData, useToday } from '@/lib/store';
 
 const hourLabel = (h: number) => (h === 0 ? '자정' : `새벽 ${h}시`);
@@ -110,6 +113,36 @@ export default function SettingsScreen() {
               })}
             </View>
           }
+        />
+      </Section>
+
+      <Section title="알림" caption={notificationsNote ?? '앱을 꺼 둬도 정한 시각에 알려드려요'}>
+        <View style={{ paddingHorizontal: 20, paddingVertical: 10, gap: 10 }}>
+          <ReminderPicker
+            label="하루 마무리 알림"
+            value={settings.summaryTime}
+            onChange={(t) => actions.updateSettings({ summaryTime: t })}
+          />
+          <T variant="small" color="muted">
+            {settings.summaryTime
+              ? `${formatTime(settings.summaryTime)}에 남은 할 일이 있으면 알려드려요`
+              : '하루가 끝나기 전에 남은 할 일을 알려드려요'}
+          </T>
+        </View>
+        <ListRow
+          left={rowIcon('bell')}
+          title="테스트 알림 보내기"
+          subtitle="10초 뒤에 알림이 와요"
+          chevron
+          onPress={async () => {
+            const perm = await sendTestNotification(10);
+            if (perm === 'granted') toast('10초 뒤에 알림이 와요. 앱을 닫아 봐도 돼요');
+            else if (perm === 'unsupported') toast('이 브라우저는 알림을 지원하지 않아요');
+            else {
+              toast('알림 권한이 꺼져 있어요');
+              if (Platform.OS !== 'web') openNotificationSettings();
+            }
+          }}
         />
       </Section>
 

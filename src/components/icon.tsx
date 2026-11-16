@@ -18,6 +18,7 @@ const ICONS = {
   upload: { ios: 'square.and.arrow.down', md: 'upload' },
   sparkles: { ios: 'sparkles', md: 'auto_awesome' },
   trash: { ios: 'trash', md: 'delete' },
+  bell: { ios: 'bell', md: 'notifications' },
   archive: { ios: 'archivebox', md: 'archive' },
 } as const;
 

@@ -6,6 +6,7 @@ import { useToast } from '@/components/toast';
 import { ListRow, T } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
 import { addDays, diffDays, type DateKey } from '@/lib/date';
+import { formatTime } from '@/lib/reminders';
 import { isDue, type HabitStats } from '@/lib/stats';
 import { actions, useAppData, useHabitStats, useToday } from '@/lib/store';
 import type { Habit } from '@/lib/types';
@@ -72,6 +73,7 @@ export function HabitRow({ habit, date }: { habit: Habit; date?: DateKey }) {
   if (isToday) sub = due ? statusLine(stats, today) : '오늘은 쉬는 날이에요';
   else if (future) sub = due ? '아직 오지 않은 날이에요' : '쉬는 날이에요';
   else sub = done ? '이날 했어요' : due ? '이날은 못 했어요' : '쉬는 날이었어요';
+  if (habit.reminder && due && !done && day >= today) sub += ` · 🔔 ${formatTime(habit.reminder)}`;
 
   return (
     <ListRow
