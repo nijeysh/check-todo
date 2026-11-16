@@ -117,19 +117,27 @@ function WheelColumn({
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')); // 00~23
-const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+/** 분은 5분 단위: 00, 05, 10 … 55 */
+const MINUTE_STEP = 5;
+const MINUTES = Array.from({ length: 60 / MINUTE_STEP }, (_, i) => String(i * MINUTE_STEP).padStart(2, '0'));
 
-/** 'HH:MM' ↔ [시 0~23, 분 0~59] */
+/** 'HH:MM' ↔ [시 0~23, 분 칸 번호 0~11]. 5분 단위가 아닌 예전 값(예: 18:37)은 가까운 5분으로 */
 function split(t: string): [number, number] {
   const [h, m] = t.split(':').map(Number);
-  return [h, m];
+  let idx = Math.round(m / MINUTE_STEP);
+  let hour = h;
+  if (idx >= MINUTES.length) {
+    idx = 0;
+    hour = (h + 1) % 24;
+  }
+  return [hour, idx];
 }
-function join(hour: number, minute: number): string {
-  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+function join(hour: number, minuteIdx: number): string {
+  return `${String(hour).padStart(2, '0')}:${String(minuteIdx * MINUTE_STEP).padStart(2, '0')}`;
 }
 
 /**
- * 아래에서 올라오는 시간 선택 시트: 시(00~23) · 분(00~59) 휠.
+ * 아래에서 올라오는 시간 선택 시트: 시(00~23) · 분(5분 단위) 휠.
  * "완료"를 누르면 onDone('HH:MM'). onClear를 주면 "알림 끄기" 버튼이 나온다.
  */
 export function TimeWheelSheet({
