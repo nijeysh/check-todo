@@ -1,11 +1,11 @@
 import * as Haptics from 'expo-haptics';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable } from 'react-native';
+import Svg, { Path, Rect } from 'react-native-svg';
 
 import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
   checked: boolean;
-  color: string;
   size?: number;
   /** 대상일이 아닌 날 (요일 지정 항목) */
   off?: boolean;
@@ -19,47 +19,51 @@ type Props = {
   label?: string;
 };
 
-/** 네모난 체크 칸. 안 한 칸은 회색, 한 칸은 항목 색으로 채운다 */
-export function CheckBox({ checked, color, size = 28, off, highlight, disabled, ghost = true, onPress, label }: Props) {
+/** 체크 표시 모양 (A안: 굵고 끝이 둥근 체크). 30×30 기준 좌표 */
+const CHECK_PATH = 'M8.5 15.5l4.5 4.5 8.5-9';
+
+/**
+ * 네모난 체크 칸. 안 한 칸은 회색, 한 칸은 브랜드 sub 색(기본 Rose Quartz)으로 채우고
+ * 같은 계열의 진한 색으로 체크를 그린다.
+ */
+export function CheckBox({ checked, size = 28, off, highlight, disabled, ghost = true, onPress, label }: Props) {
   const c = useTheme();
-  const radius = Math.round(size * 0.3);
-  const bg = checked ? color : off || disabled ? c.boxOff : c.boxEmpty;
+  const fill = checked ? c.sub : off || disabled ? c.boxOff : c.boxEmpty;
+  const showMark = checked || (ghost && !off && !disabled);
+  const ring = highlight && !checked;
+
   const box = (
-    <View
-      style={[
-        styles.box,
-        {
-          width: size,
-          height: size,
-          borderRadius: radius,
-          backgroundColor: bg,
-          borderWidth: highlight && !checked ? 2 : 0,
-          borderColor: c.accent,
-          opacity: disabled && !checked ? 0.5 : 1,
-        },
-      ]}>
-      {checked || (ghost && !off && !disabled) ? (
-        <Text
-          style={[
-            styles.mark,
-            {
-              fontSize: size * 0.58,
-              lineHeight: size * 0.9,
-              color: checked ? '#FFFFFF' : c.surface,
-            },
-          ]}>
-          ✓
-        </Text>
+    <Svg width={size} height={size} viewBox="0 0 30 30" style={{ opacity: disabled && !checked ? 0.5 : 1 }}>
+      <Rect
+        x={ring ? 1 : 0}
+        y={ring ? 1 : 0}
+        width={ring ? 28 : 30}
+        height={ring ? 28 : 30}
+        rx={ring ? 8 : 9}
+        fill={fill}
+        stroke={ring ? c.accent : 'none'}
+        strokeWidth={ring ? 2 : 0}
+      />
+      {showMark ? (
+        <Path
+          d={CHECK_PATH}
+          fill="none"
+          stroke={checked ? c.onSub : c.surface}
+          strokeWidth={3.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       ) : null}
-    </View>
+    </Svg>
   );
+
   if (!onPress || disabled) return box;
   return (
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       accessibilityLabel={label}
-      hitSlop={6}
+      hitSlop={10}
       onPress={() => {
         if (Platform.OS !== 'web')
           Haptics.impactAsync(checked ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium);
@@ -70,8 +74,3 @@ export function CheckBox({ checked, color, size = 28, off, highlight, disabled, 
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  box: { alignItems: 'center', justifyContent: 'center' },
-  mark: { fontWeight: '900', textAlign: 'center' },
-});

@@ -55,6 +55,50 @@ function readableOn(color: string, bg: string, toward: string): string {
   return out;
 }
 
+function toHsl(hex: string): [number, number, number] {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const sat = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  const h = max === r ? (g - b) / d + (g < b ? 6 : 0) : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [h * 60, sat, l];
+}
+
+function fromHsl(h: number, sat: number, l: number): string {
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = sat * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return (
+    '#' +
+    [0, 8, 4]
+      .map((n) =>
+        Math.round(f(n) * 255)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+      .toUpperCase()
+  );
+}
+
+/**
+ * sub 색 위에 올릴 표시(체크 등) 색.
+ * 밝은 sub면 같은 색 계열에서 진하게(Rose Quartz → 진한 장미색), 어두운 sub면 흰색.
+ */
+function inkOn(bg: string): string {
+  if (luminance(bg) < 0.3) return '#FFFFFF';
+  const [h, sat] = toHsl(bg);
+  let out = bg;
+  for (let l = 0.4; l >= 0.1; l -= 0.04) {
+    out = fromHsl(h, Math.min(Math.max(sat, 0.35), 0.6), l);
+    if (contrast(out, bg) >= 4.5) break;
+  }
+  return out;
+}
+
 /**
  * 색 체계: 밝은 회색 배경 위에 흰 카드, main 강조색 + sub 보조색, 글자는 회색 단계로 위계를 준다.
  * main/sub가 무엇이든 글씨가 읽히도록 accentInk(글씨용 main)와 onAccent(main 위 글씨)를 계산한다.
@@ -68,6 +112,7 @@ export function buildPalette(scheme: 'light' | 'dark', main = BRAND.main, sub = 
       main: accent,
       sub,
       subSoft: mix(sub, '#101013', 0.7),
+      onSub: inkOn(sub),
       text: '#F2F2F5',
       textSecondary: '#C3C3C9',
       textMuted: '#8F8F99',
@@ -94,6 +139,7 @@ export function buildPalette(scheme: 'light' | 'dark', main = BRAND.main, sub = 
     sub,
     // 이미 밝은 sub(연핑크·베이지 등)는 그대로, 진한 sub는 연하게 풀어서 배지 배경으로 쓴다
     subSoft: luminance(sub) > 0.55 ? sub : mix(sub, '#FFFFFF', 0.75),
+    onSub: inkOn(sub),
     text: INK,
     textSecondary: '#4E5968',
     textMuted: '#8B95A1',

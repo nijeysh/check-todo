@@ -27,7 +27,6 @@ export function OnceTaskRow({ task, date }: { task: Habit; date: DateKey }) {
         <CheckBox
           size={30}
           checked={done}
-          color={task.color}
           label={`${task.title} 완료`}
           onPress={() => toast(actions.toggleCheck(task.id, date))}
         />
@@ -42,7 +41,7 @@ export function OnceTaskRow({ task, date }: { task: Habit; date: DateKey }) {
           {task.title}
         </T>
       }
-      right={
+      accessory={
         <Pressable
           hitSlop={10}
           accessibilityLabel={`${task.title} 삭제`}

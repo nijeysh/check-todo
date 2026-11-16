@@ -206,12 +206,17 @@ export function Section({
   );
 }
 
-/** 구역 안의 한 줄 */
+/**
+ * 구역 안의 한 줄.
+ * left(체크 칸 등)와 accessory(삭제 버튼 등)는 줄 전체 누르기(onPress)와 따로 눌리도록
+ * 누르기 영역 바깥에 둔다. 그래서 체크 칸을 눌러도 상세로 넘어가지 않는다.
+ */
 export function ListRow({
   left,
   title,
   subtitle,
   right,
+  accessory,
   onPress,
   chevron,
   titleColor,
@@ -219,15 +224,17 @@ export function ListRow({
   left?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
+  /** 줄 누르기 영역 안의 오른쪽 내용 (배지 등, 눌러도 줄 onPress) */
   right?: ReactNode;
+  /** 줄 누르기 영역 밖의 맨 오른쪽 버튼 (삭제 등) */
+  accessory?: ReactNode;
   onPress?: () => void;
   chevron?: boolean;
   titleColor?: TextColor;
 }) {
   const c = useTheme();
-  const body = (
+  const main = (
     <>
-      {left}
       <View style={{ flex: 1, gap: 2 }}>
         {typeof title === 'string' ? (
           <T variant="bodyStrong" color={titleColor} numberOfLines={1}>
@@ -248,19 +255,21 @@ export function ListRow({
       {chevron ? <Icon name="chevronRight" size={20} color={c.textFaint} /> : null}
     </>
   );
-  const style: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: Radius.md,
-  };
-  if (!onPress) return <View style={style}>{body}</View>;
+  const inner: ViewStyle = { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14 };
   return (
-    <Tap onPress={onPress} style={style}>
-      {body}
-    </Tap>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20 }}>
+      {left}
+      {onPress ? (
+        <Tap
+          onPress={onPress}
+          style={[inner, { flex: 1, borderRadius: Radius.md, marginHorizontal: -6, paddingHorizontal: 6 }]}>
+          {main}
+        </Tap>
+      ) : (
+        <View style={[inner, { flex: 1 }]}>{main}</View>
+      )}
+      {accessory}
+    </View>
   );
 }
 

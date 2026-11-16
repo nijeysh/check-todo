@@ -80,7 +80,6 @@ export function HabitRow({ habit, date }: { habit: Habit; date?: DateKey }) {
         <CheckBox
           size={30}
           checked={done}
-          color={habit.color}
           off={!due}
           disabled={future}
           label={`${habit.title} ${isToday ? '오늘' : day} 체크`}

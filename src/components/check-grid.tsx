@@ -106,7 +106,6 @@ export function CheckGrid({ habits, days, boxSize = 26, nameWidth = 120 }: Props
                     <CheckBox
                       size={boxSize}
                       checked={!!done[k]}
-                      color={h.color}
                       off={!isDue(h, k)}
                       highlight={k === today}
                       disabled={k > today}
