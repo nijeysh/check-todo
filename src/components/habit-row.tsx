@@ -5,14 +5,27 @@ import { CheckBox } from '@/components/check-box';
 import { useToast } from '@/components/toast';
 import { ListRow, T } from '@/components/ui';
 import { useTheme } from '@/hooks/use-theme';
-import { addDays, diffDays, type DateKey } from '@/lib/date';
+import { addDays, diffDays, formatLong, type DateKey } from '@/lib/date';
 import { formatTime } from '@/lib/reminders';
-import { isDue, type HabitStats } from '@/lib/stats';
+import { habitPhase, isDue, scheduleLabel, type HabitStats } from '@/lib/stats';
 import { actions, useAppData, useHabitStats, useToday } from '@/lib/store';
 import type { Habit } from '@/lib/types';
 
-/** 현재 상태 한 줄 요약: 연속 중 / 며칠째 쉬는 중 */
-export function statusLine(s: HabitStats, today: DateKey): string {
+/** 기간 밖일 때 한 줄: "11월 20일 (금)부터 · 3일 뒤" / "12월 16일 (수)에 끝났어요" */
+export function periodLine(habit: Pick<Habit, 'startDate' | 'endDate'>, today: DateKey): string | undefined {
+  const phase = habitPhase(habit, today);
+  if (phase === 'upcoming') {
+    const n = diffDays(today, habit.startDate);
+    return `${formatLong(habit.startDate)}부터 시작 · ${n === 1 ? '내일' : `${n}일 뒤`}`;
+  }
+  if (phase === 'ended') return `${formatLong(habit.endDate!)}에 끝났어요`;
+  return undefined;
+}
+
+/** 현재 상태 한 줄 요약: 연속 중 / 며칠째 쉬는 중 (기간 밖이면 시작 전·끝남) */
+export function statusLine(s: HabitStats, today: DateKey, habit?: Pick<Habit, 'startDate' | 'endDate'>): string {
+  const period = habit && periodLine(habit, today);
+  if (period) return s.bestStreak && habit?.endDate && today > habit.endDate ? `${period} · 최장 ${s.bestStreak}일` : period;
   if (s.currentStreak > 0) {
     const best =
       s.bestStreak > s.currentStreak ? ` · 최장 ${s.bestStreak}일` : s.currentStreak > 1 ? ' · 최장 기록 중' : '';
@@ -69,8 +82,10 @@ export function HabitRow({ habit, date }: { habit: Habit; date?: DateKey }) {
   const done = !!checks[habit.id]?.[day];
   const future = day > today;
 
+  const outside = day < habit.startDate || (!!habit.endDate && day > habit.endDate);
   let sub: string;
-  if (isToday) sub = due ? statusLine(stats, today) : '오늘은 쉬는 날이에요';
+  if (isToday) sub = periodLine(habit, today) ?? (due ? statusLine(stats, today) : `오늘은 쉬는 날이에요 · ${scheduleLabel(habit.schedule)}`);
+  else if (outside && !done) sub = day < habit.startDate ? '시작 전이에요' : '기간이 끝났어요';
   else if (future) sub = due ? '아직 오지 않은 날이에요' : '쉬는 날이에요';
   else sub = done ? '이날 했어요' : due ? '이날은 못 했어요' : '쉬는 날이었어요';
   if (habit.reminder && due && !done && day >= today) sub += ` · 🔔 ${formatTime(habit.reminder)}`;
@@ -83,7 +98,7 @@ export function HabitRow({ habit, date }: { habit: Habit; date?: DateKey }) {
           size={30}
           checked={done}
           off={!due}
-          disabled={future}
+          disabled={future || (outside && !done)}
           label={`${habit.title} ${isToday ? '오늘' : day} 체크`}
           onPress={() => {
             const f = actions.toggleCheck(habit.id, day);

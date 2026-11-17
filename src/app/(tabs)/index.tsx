@@ -24,7 +24,9 @@ export default function TodayScreen() {
   const left = due.length - doneCount;
 
   const headline = !due.length
-    ? '오늘 할 일을\n추가해 볼까요?'
+    ? habits.length
+      ? '오늘은\n쉬는 날이에요 😌'
+      : '오늘 할 일을\n추가해 볼까요?'
     : left === 0
       ? '오늘 할 일을\n모두 끝냈어요 🎉'
       : `오늘 할 일이\n${left}개 남았어요`;

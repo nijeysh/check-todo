@@ -29,8 +29,8 @@ export default function StatsScreen() {
       <Screen header={<PageTitle title="통계" />}>
         <Section>
           <View style={{ alignItems: 'center', gap: 12, paddingVertical: 32 }}>
-            <T color="muted">매일 하는 항목을 추가하면 여기에 통계가 보여요</T>
-            <Button title="항목 추가하기" kind="weak" size="sm" onPress={() => router.push('/habit/edit')} />
+            <T color="muted">루틴을 추가하면 여기에 통계가 보여요</T>
+            <Button title="루틴 추가하기" kind="weak" size="sm" onPress={() => router.push('/habit/edit')} />
           </View>
         </Section>
       </Screen>
@@ -51,7 +51,7 @@ export default function StatsScreen() {
         </View>
       </Section>
 
-      <Section title="항목별">
+      <Section title="루틴별">
         {rows.map(({ habit: h, stats: s }) => (
           <ListRow
             key={h.id}
@@ -73,7 +73,7 @@ export default function StatsScreen() {
             subtitle={
               <View style={{ gap: 2 }}>
                 <T variant="small" color="secondary" numberOfLines={1}>
-                  {statusLine(s, today)}
+                  {statusLine(s, today, h)}
                 </T>
                 <T variant="caption" color="muted" numberOfLines={1}>
                   최장 {s.bestStreak}일 · 끊긴 날 {s.missedDays}일 · 끊긴 횟수 {s.breakCount}번

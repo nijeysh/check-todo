@@ -46,8 +46,8 @@ export default function GridScreen() {
             />
           ) : (
             <View style={{ alignItems: 'center', gap: 12, paddingVertical: 24 }}>
-              <T color="muted">아직 매일 하는 항목이 없어요</T>
-              <Button title="항목 추가하기" kind="weak" size="sm" onPress={() => router.push('/habit/edit')} />
+              <T color="muted">아직 루틴이 없어요</T>
+              <Button title="루틴 추가하기" kind="weak" size="sm" onPress={() => router.push('/habit/edit')} />
             </View>
           )}
         </View>

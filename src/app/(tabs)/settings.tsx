@@ -147,7 +147,7 @@ export default function SettingsScreen() {
       </Section>
 
       {archived.length ? (
-        <Section title="보관한 항목" caption="기록은 그대로 남아 있어요">
+        <Section title="보관한 루틴" caption="기록은 그대로 남아 있어요">
           {archived.map((h) => (
             <ListRow
               key={h.id}

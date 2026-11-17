@@ -56,7 +56,6 @@ export function MonthView({
             const isToday = date === today;
             const future = date > today;
             const holiday = holidays[date];
-            const doneHabits = s.habits.filter((h) => checks[h.id]?.[date]);
             return (
               <Pressable
                 key={date}
@@ -100,18 +99,32 @@ export function MonthView({
                     {holiday}
                   </T>
                 ) : null}
-                {/* 그날 한 지속 항목: 색 점 */}
-                {doneHabits.length ? (
+                {/* 그날 하는 루틴: 했으면 색 점, 아직(또는 못) 했으면 테두리만 */}
+                {s.habits.length ? (
                   <View
                     style={{
                       flexDirection: 'row',
                       flexWrap: 'wrap',
-                      gap: 2,
+                      gap: 3,
                       justifyContent: phone ? 'center' : 'flex-start',
                     }}>
-                    {doneHabits.slice(0, phone ? 4 : 8).map((h) => (
-                      <View key={h.id} style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: h.color }} />
-                    ))}
+                    {s.habits.slice(0, phone ? 4 : 8).map((h) => {
+                      const done = !!checks[h.id]?.[date];
+                      return (
+                        <View
+                          key={h.id}
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: 3.5,
+                            backgroundColor: done ? h.color : 'transparent',
+                            borderWidth: done ? 0 : 1.5,
+                            borderColor: h.color,
+                            opacity: future ? 0.5 : 1,
+                          }}
+                        />
+                      );
+                    })}
                   </View>
                 ) : null}
                 {/* 그날만 할 일: 막대 */}

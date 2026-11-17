@@ -2,14 +2,15 @@ import { Redirect, Stack, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { HabitForm } from '@/components/habit-form';
 import { MonthCalendar } from '@/components/month-calendar';
 import { MonthNav } from '@/components/month-nav';
 import { useToast } from '@/components/toast';
 import { Button, Screen, Section, StatTile, T } from '@/components/ui';
 import { Radius, Spacing } from '@/constants/theme';
 import { useLayoutSize, useTheme } from '@/hooks/use-theme';
-import { addMonths, diffDays, formatShort, monthStart, parts, type DateKey } from '@/lib/date';
-import type { HabitStats } from '@/lib/stats';
+import { addDays, addMonths, diffDays, formatLong, formatShort, monthStart, parts, type DateKey } from '@/lib/date';
+import { habitPhase, isDue, scheduleLabel, type HabitStats } from '@/lib/stats';
 import { actions, useAppData, useHabitStats, useToday } from '@/lib/store';
 
 export default function HabitDetailScreen() {
@@ -29,7 +30,7 @@ export default function HabitDetailScreen() {
   if (!habit || !stats) {
     return (
       <Screen>
-        <T color="secondary">항목을 찾을 수 없어요.</T>
+        <T color="secondary">루틴을 찾을 수 없어요.</T>
         <Button title="오늘로 돌아가기" kind="grey" onPress={() => router.replace('/')} />
       </Screen>
     );
@@ -43,14 +44,27 @@ export default function HabitDetailScreen() {
   const lastComeback = comebacks[comebacks.length - 1];
   const sinceLast = stats.lastDone ? diffDays(stats.lastDone, today) : 0;
 
+  const phase = habitPhase(habit, today);
+  const lastPast = habit.pastSchedules?.[habit.pastSchedules.length - 1];
+  const untilStart = diffDays(today, habit.startDate);
   const headline =
-    stats.currentStreak > 0
+    phase === 'upcoming'
+      ? `${untilStart === 1 ? '내일' : `${untilStart}일 뒤`}\n시작해요`
+      : phase === 'ended'
+        ? '기간을\n마쳤어요 🎉'
+        : stats.currentStreak > 0
       ? `${stats.currentStreak}일째\n이어가고 있어요 🔥`
       : stats.lastDone
         ? `${sinceLast - 1}일째\n쉬고 있어요`
         : '아직\n시작 전이에요';
   const sub =
-    stats.currentStreak > 0
+    phase === 'upcoming'
+      ? `${formatLong(habit.startDate)}부터 첫 칸을 채울 수 있어요`
+      : phase === 'ended'
+        ? `${stats.totalDone}번 체크했고, 최장 ${stats.bestStreak}일 이어갔어요`
+        : !isDue(habit, today) && !stats.doneToday
+          ? '오늘은 쉬는 날이에요. 다음 하는 날에 이어가요'
+          : stats.currentStreak > 0
       ? stats.doneToday
         ? stats.currentStreak >= stats.bestStreak && stats.currentStreak > 1
           ? '지금이 최장 기록이에요'
@@ -64,19 +78,7 @@ export default function HabitDetailScreen() {
 
   return (
     <Screen>
-      <Stack.Screen
-        options={{
-          title: '',
-          headerRight: () => (
-            <Button
-              title="편집"
-              kind="text"
-              size="sm"
-              onPress={() => router.push({ pathname: '/habit/edit', params: { id: habit.id } })}
-            />
-          ),
-        }}
-      />
+      <Stack.Screen options={{ title: '' }} />
 
       <View style={{ gap: 14, paddingVertical: Spacing.two }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -99,9 +101,14 @@ export default function HabitDetailScreen() {
         <T variant="body" color="secondary">
           {sub}
         </T>
+        <T variant="small" color="muted">
+          {scheduleLabel(habit.schedule)} · {formatShort(habit.startDate)}부터
+          {habit.endDate ? ` ${formatShort(habit.endDate)}까지` : ' 종료일 없음'}
+          {lastPast ? ` · ${formatShort(addDays(lastPast.until, 1))}에 요일 바꿈 (전에는 ${scheduleLabel(lastPast.schedule)})` : ''}
+        </T>
         {habit.archivedAt ? (
           <T variant="small" color="danger">
-            보관한 항목이에요
+            보관한 루틴이에요
           </T>
         ) : null}
       </View>
@@ -155,6 +162,13 @@ export default function HabitDetailScreen() {
           <Timeline stats={stats} color={habit.color} c={c} />
         </Section>
       </View>
+
+      {/* 루틴 설정: 따로 들어가지 않고 여기서 바로 고친다 */}
+      <Section title="루틴 설정" caption="고치고 저장하면 바로 반영돼요" style={{ paddingBottom: 20 }}>
+        <View style={{ paddingHorizontal: 20, maxWidth: 600 }}>
+          <HabitForm key={habit.id} existing={habit} inline />
+        </View>
+      </Section>
     </Screen>
   );
 }

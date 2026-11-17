@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, T } from '@/components/ui';
 import { Fonts, Radius } from '@/constants/theme';
+import { useSheetGuard } from '@/hooks/use-sheet-guard';
 import { useTheme } from '@/hooks/use-theme';
 
 const ITEM_H = 44;
@@ -158,6 +159,7 @@ export function TimeWheelSheet({
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const [sel, setSel] = useState<[number, number]>(() => split(value ?? '21:00'));
+  const guard = useSheetGuard(visible);
 
   // 열 때마다 현재 값으로 맞춘다
   const [openKey, setOpenKey] = useState(0);
@@ -180,7 +182,7 @@ export function TimeWheelSheet({
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Pressable
           accessibilityLabel="닫기"
-          onPress={onClose}
+          onPress={guard(onClose)}
           style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)' }}
         />
         <View
@@ -233,22 +235,22 @@ export function TimeWheelSheet({
             <Button
               title="알림 끄기"
               kind="text"
-              onPress={() => {
+              onPress={guard(() => {
                 onClear();
                 onClose();
-              }}
+              })}
             />
           ) : null}
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Button title="취소" kind="grey" size="lg" style={{ flex: 1 }} onPress={onClose} />
+            <Button title="취소" kind="grey" size="lg" style={{ flex: 1 }} onPress={guard(onClose)} />
             <Button
               title="완료"
               size="lg"
               style={{ flex: 2 }}
-              onPress={() => {
+              onPress={guard(() => {
                 onDone(join(...sel));
                 onClose();
-              }}
+              })}
             />
           </View>
         </View>

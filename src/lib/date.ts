@@ -97,3 +97,10 @@ export function addMonths(key: DateKey, n: number): DateKey {
 export function daysInMonth(key: DateKey): number {
   return diffDays(monthStart(key), addMonths(key, 1));
 }
+
+/** n달 뒤 같은 날 (그 달에 없는 날이면 말일로): 1/31 + 1달 → 2/28 */
+export function addMonthsSameDay(key: DateKey, n: number): DateKey {
+  const first = addMonths(key, n);
+  const d = Math.min(parts(key).d, daysInMonth(first));
+  return first.slice(0, 8) + pad(d);
+}
